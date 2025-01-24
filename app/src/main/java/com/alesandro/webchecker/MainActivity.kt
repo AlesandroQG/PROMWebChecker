@@ -7,9 +7,18 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 /**
- * Clase principal de la aplicación
+ * Clase de entrada a la aplicación
+ *
+ * @author Alesandro Quirós Gobbato
  */
 class MainActivity : AppCompatActivity() {
+    private var semaphore = "R"
+
+    /**
+     * Función que se ejecuta al iniciar la aplicación
+     *
+     * @param savedInstanceState
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
