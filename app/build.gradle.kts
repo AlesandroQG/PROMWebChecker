@@ -34,6 +34,7 @@ android {
 
 dependencies {
 
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
     implementation("androidx.work:work-runtime-ktx:2.8.1")
     implementation("org.jsoup:jsoup:1.15.4")
     implementation("androidx.core:core-ktx:1.6.0")
