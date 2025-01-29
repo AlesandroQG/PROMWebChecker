@@ -1,17 +1,25 @@
 package com.alesandro.webchecker
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.work.PeriodicWorkRequestBuilder
@@ -33,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var db: ResultadoDatabaseHelper
     private lateinit var resultadoList: MutableList<Resultado>
     private lateinit var resultadoAdapter: ResultadoAdapter
+    private lateinit var tvStatus: TextView
 
     /**
      * Función que se ejecuta al iniciar la aplicación
@@ -48,18 +57,27 @@ class MainActivity : AppCompatActivity() {
             }
         }
         db = ResultadoDatabaseHelper(this)
+        tvStatus = findViewById(R.id.tvStatus)
+        if (semaforo == "V") {
+            tvStatus.text = "On"
+        } else {
+            tvStatus.text = "Off"
+        }
         lista = findViewById(R.id.lista)
         resultadoList = db.getAllResultados()
         lista.layoutManager = LinearLayoutManager(this)
         resultadoAdapter = ResultadoAdapter(resultadoList) { resultado ->
             deleteResultado(resultado)
         }
+        lista.adapter = resultadoAdapter
+        lista.itemAnimator = DefaultItemAnimator()
         val urlField = findViewById<EditText>(R.id.etUrl)
         val palabraField = findViewById<EditText>(R.id.etWord)
         val btnPlay = findViewById<Button>(R.id.btnPlay)
         val btnStop = findViewById<Button>(R.id.btnOff)
         btnPlay.setOnClickListener {
             this.semaforo = "V"
+            tvStatus.text = "On"
             val sharedPreferences = getSharedPreferences("WebCheckerPrefs", MODE_PRIVATE)
             sharedPreferences.edit().putString("semaforo", semaforo).apply()
             WorkManager.getInstance(this).cancelAllWorkByTag(this.workTag)
@@ -73,16 +91,25 @@ class MainActivity : AppCompatActivity() {
 
             // Guardar el ID del trabajo en ejecución
             this.workId = workRequest.id
+
+            val workManager = WorkManager.getInstance(this)
+            workManager.getWorkInfoByIdLiveData(workRequest.id).observe(this) { workInfo ->
+                if (workInfo != null && workInfo.state == WorkInfo.State.SUCCEEDED) {
+                    // Update the list with new results from the database
+                    resultadoList.clear()
+                    resultadoList.addAll(db.getAllResultados())
+                    resultadoAdapter.notifyDataSetChanged()
+                }
+            }
         }// Listener para el botón "Stop"
         btnStop.setOnClickListener {
             println("Pulso boton stop")
             this.semaforo="R"
+            tvStatus.text = "Off"
             val sharedPreferences = getSharedPreferences("WebCheckerPrefs", MODE_PRIVATE)
             sharedPreferences.edit().putString("semaforo", semaforo).apply()
-
             stopWork()
         }
-
         // Listener para capturar cambios en el campo de texto de la URL
         urlField.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -100,7 +127,6 @@ class MainActivity : AppCompatActivity() {
                 println("URL ingresada: $url")
             }
         })
-
         // Listener para capturar cambios en el campo de texto de la palabra clave
         palabraField.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -155,5 +181,34 @@ class MainActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, "No se ha podido eliminar ese resultado", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    /**
+     * Variable para la detección de actualizaciones de WebCheckerWorker
+     */
+    private val resultUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            // Update RecyclerView when a new result is added
+            resultadoList.clear()
+            resultadoList.addAll(db.getAllResultados())
+            resultadoAdapter.notifyDataSetChanged()
+        }
+    }
+
+    /**
+     * Función que inicia la detección de actualizaciones de WebCheckerWorker
+     */
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter("com.alesandro.webchecker.RESULT_UPDATED")
+        LocalBroadcastManager.getInstance(this).registerReceiver(resultUpdateReceiver, filter)
+    }
+
+    /**
+     * Función que para la detección de actualizaciones de WebCheckerWorker
+     */
+    override fun onStop() {
+        super.onStop()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(resultUpdateReceiver)
     }
 }

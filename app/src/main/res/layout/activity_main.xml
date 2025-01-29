@@ -13,7 +13,7 @@
         android:layout_height="56sp"
         android:layout_weight="1"
         android:hint="Enter URL"
-        android:inputType="text"
+        android:inputType="text|textUri"
         app:layout_constraintBottom_toTopOf="@id/etWord"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -60,6 +60,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnPlay"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Off"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnOff"
         tools:ignore="HardcodedText" />
 
     <androidx.constraintlayout.widget.Guideline

@@ -30,7 +30,7 @@ class ResultadoDatabaseHelper(context: Context) :
             "CREATE TABLE $TABLE_NAME (" +
                     "$COLUMN_ID INTEGER PRIMARY KEY, " +
                     "$COLUMN_URL TEXT, " +
-                    "$COLUMN_RESULTADO TEXT"
+                    "$COLUMN_RESULTADO TEXT)"
         db?.execSQL(createTableQuery)
     }
 

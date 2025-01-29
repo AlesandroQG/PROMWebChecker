@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace = "com.alesandro.webchecker"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.alesandro.webchecker"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

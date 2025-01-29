@@ -4,8 +4,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.jsoup.Jsoup
@@ -34,16 +36,20 @@ class WebCheckerWorker(appContext: Context, workerParams: WorkerParameters): Wor
             val url = sharedPreferences.getString("url", null) ?: return Result.failure()
             val palabra = sharedPreferences.getString("word", null) ?: return Result.failure()
             if (isStopped || semaforo.equals("R")) {
+                println("Palabra")
                 return Result.failure()
             }
             val doc = Jsoup.connect(url).get()
             if (isStopped || semaforo.equals("R")) {
+                println("Doc")
                 return Result.failure()
             }
             if (doc.text().contains(palabra, ignoreCase = true)) {
                 sendNotification(url, palabra)
             }
         } catch (e: Exception) {
+            println("Exception")
+            e.printStackTrace()
             return Result.failure()
         }
         return Result.success()
@@ -58,6 +64,9 @@ class WebCheckerWorker(appContext: Context, workerParams: WorkerParameters): Wor
     private fun sendNotification(url: String, palabra: String) {
         val db = ResultadoDatabaseHelper(applicationContext)
         db.insertResultado(Resultado(url = url, resultado = palabra))
+        // Notificar el MainActivity del cambio de la base de datos
+        val intent = Intent("com.alesandro.webchecker.RESULT_UPDATED")
+        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
         // Crear el canal de notificación (solo necesario para API 26+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel("guestlist_channel", "Guestlist Notification", NotificationManager.IMPORTANCE_DEFAULT
