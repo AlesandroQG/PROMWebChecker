@@ -169,7 +169,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Función que elimina un resultado de la lista
+     * Función que elimina un resultado de la base de datos
      *
      * @param resultado resultado a eliminar
      */
